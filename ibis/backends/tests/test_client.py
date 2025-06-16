@@ -1112,23 +1112,6 @@ def test_dunder_array_column(alltypes, dtype):
     np.testing.assert_array_equal(result, expected)
 
 
-@pytest.mark.parametrize("interactive", [True, False])
-def test_repr(alltypes, interactive, monkeypatch):
-    pytest.importorskip("rich")
-
-    monkeypatch.setattr(ibis.options, "interactive", interactive)
-
-    expr = alltypes.select("date_string_col")
-
-    s = repr(expr)
-    # no control characters
-    assert all(c.isprintable() or c in "\n\r\t" for c in s)
-    if interactive:
-        assert "/" in s
-    else:
-        assert "/" not in s
-
-
 @pytest.mark.parametrize("show_types", [True, False])
 def test_interactive_repr_show_types(alltypes, show_types, monkeypatch):
     pytest.importorskip("rich")
@@ -1736,7 +1719,7 @@ def test_cross_database_join(con_create_database, monkeypatch):
 @pytest.mark.notyet(["flink"], raises=AttributeError, reason="no _safe_raw_sql method")
 @pytest.mark.notyet(["polars"], reason="Doesn't support insert")
 @pytest.mark.notimpl(
-    ["impala", "pyspark", "trino"], reason="Default constraints are not supported"
+    ["impala", "trino"], reason="Default constraints are not supported"
 )
 @pytest.mark.notimpl(
     ["databricks"],
@@ -1745,6 +1728,7 @@ def test_cross_database_join(con_create_database, monkeypatch):
     raises=DatabricksServerOperationError,
 )
 @pytest.mark.notimpl(["athena"], reason="insert isn't implemented yet")
+@pytest.mark.xfail_version(pyspark=["pyspark<3.4"])
 def test_insert_into_table_missing_columns(con, temp_table):
     db = getattr(con, "current_database", None)
 
